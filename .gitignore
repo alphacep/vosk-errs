@@ -1,0 +1,6 @@
+__pycache__
+*.freq
+*.pyc
+test.ref
+test.hyp
+test.res
