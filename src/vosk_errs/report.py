@@ -124,14 +124,7 @@ def write_error_stats(
         char_ref_len += s.ref_words
     cer = "%.2f" % (100.0 * char_errs / char_ref_len if char_ref_len else 0.0)
 
-    print(f"WER: {tot_err_rate}", file=f)
-    print(f"CER: {cer}", file=f)
-    print(
-        f"ERR: {ins_errs} insertions, {del_errs} deletions, "
-        f"{sub_errs} substitutions, over {ref_len} reference "
-        f"words ({num_corr} correct)",
-        file=f,
-    )
+    rare_str = ""
     if frequent_words is not None:
         sub_rate = "%.2f" % (
             100.0 * sub_errs / ref_len if ref_len else 0.0
@@ -140,12 +133,11 @@ def write_error_stats(
             100.0 * rare_sub_count / rare_ref_count if rare_ref_count else 0.0
         )
         cutoff = f"top {top_n}" if top_n is not None else "frequent set"
-        print(
-           f"SUB:",
-           f"{sub_rate} ({sub_errs}/{ref_len} all words)",
-           f"{rare_rate} ({rare_sub_count}/{rare_ref_count} rare below {cutoff})",
-           file=f
-        )
+        rare_str = "SRATE: " + \
+                   f"{sub_rate} ({sub_errs}/{ref_len}) " + \
+                   f"{rare_rate} ({rare_sub_count}/{rare_ref_count} cut {cutoff})"
+    print(f"WER: {tot_err_rate}     CER: {cer}     I: {ins_errs} D: {del_errs} S: {sub_errs} ({num_corr}/{ref_len})     {rare_str}",
+          file=f)
     print("", file=f)
     print("SUBSTITUTIONS: count ref -> hyp", file=f)
     for count, (r, h) in sorted(((v, k) for k, v in subs.items()), reverse=True):
