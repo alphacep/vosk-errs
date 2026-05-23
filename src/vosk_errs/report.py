@@ -132,11 +132,10 @@ def write_error_stats(
         rare_rate = "%.2f" % (
             100.0 * rare_sub_count / rare_ref_count if rare_ref_count else 0.0
         )
-        cutoff = f"top {top_n}" if top_n is not None else "frequent set"
         rare_str = "SRATE: " + \
                    f"{sub_rate} ({sub_errs}/{ref_len}) " + \
-                   f"{rare_rate} ({rare_sub_count}/{rare_ref_count} cut {cutoff})"
-    print(f"WER: {tot_err_rate}     CER: {cer}     I: {ins_errs} D: {del_errs} S: {sub_errs} ({num_corr}/{ref_len})     {rare_str}",
+                   f"{rare_rate} ({rare_sub_count}/{rare_ref_count} at {top_n})"
+    print(f"WER: {tot_err_rate}   CER: {cer}   I/D/S: {ins_errs}/{del_errs}/{sub_errs} ({num_corr}/{ref_len})   {rare_str}",
           file=f)
     print("", file=f)
     print("SUBSTITUTIONS: count ref -> hyp", file=f)
