@@ -49,7 +49,7 @@ def main(argv=None) -> int:
     if missing:
         print(
             f"warning: {len(missing)} ref utterance(s) missing from hyp "
-            f"(counted as full deletions): {', '.join(missing[:5])}"
+            f"(ignored): {', '.join(missing[:5])}"
             + ("..." if len(missing) > 5 else ""),
             file=sys.stderr,
         )
@@ -67,12 +67,7 @@ def main(argv=None) -> int:
             h = [w.lower() for w in h]
         rows.append((utt_id, r, h))
 
-    # Missing utterances count as full deletions of the reference.
-    for utt_id in missing:
-        r = ref[utt_id]
-        if args.ignore_case:
-            r = [w.lower() for w in r]
-        rows.append((utt_id, r, []))
+    # Missing utterances (no hyp line) are ignored, not scored.
 
     frequent_words = None
     if args.freq is not None:
