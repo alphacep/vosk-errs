@@ -2,6 +2,29 @@ from pathlib import Path
 from typing import Dict, List, Set, Tuple
 
 
+def read_word_list(path: Path, lowercase: bool = False) -> Set[str]:
+    """Read a one-word-per-line word list.
+
+    Blank lines and lines starting with '#' are ignored.
+    """
+    words: Set[str] = set()
+    with open(path, "r", encoding="utf-8") as f:
+        for lineno, raw in enumerate(f, 1):
+            line = raw.strip()
+            if not line or line.startswith("#"):
+                continue
+            parts = line.split()
+            if len(parts) != 1:
+                raise ValueError(
+                    f"{path}:{lineno}: expected one word, got {raw.rstrip()!r}"
+                )
+            word = parts[0]
+            if lowercase:
+                word = word.lower()
+            words.add(word)
+    return words
+
+
 def read_frequent_words(path: Path, top_n: int, lowercase: bool = False) -> Set[str]:
     """Read a `<logprob>\\t<word>` frequency file and return the top `top_n` words.
 

@@ -2,7 +2,7 @@ import argparse
 import sys
 from pathlib import Path
 
-from .io import pair, read_frequent_words, read_transcripts
+from .io import pair, read_frequent_words, read_transcripts, read_word_list
 from .report import write_error_stats
 
 
@@ -26,12 +26,20 @@ def main(argv=None) -> int:
         type=Path,
         help="write the report to this file (default: stdout)",
     )
-    p.add_argument(
+    rare_group = p.add_mutually_exclusive_group()
+    rare_group.add_argument(
         "-f",
         "--freq",
         type=Path,
         help="word frequency file (`<logprob>\\t<word>` per line); "
         "enables a rare-word substitution rate in the report",
+    )
+    rare_group.add_argument(
+        "-l",
+        "--rare-list",
+        type=Path,
+        help="one-word-per-line list of rare words; enables rare-word "
+        "statistics in the report for just those words",
     )
     p.add_argument(
         "--top-n",
@@ -70,19 +78,30 @@ def main(argv=None) -> int:
     # Missing utterances (no hyp line) are ignored, not scored.
 
     frequent_words = None
+    rare_words = None
     if args.freq is not None:
         frequent_words = read_frequent_words(
             args.freq, args.top_n, lowercase=args.ignore_case
         )
+    if args.rare_list is not None:
+        rare_words = read_word_list(args.rare_list, lowercase=args.ignore_case)
 
     if args.output is None:
         write_error_stats(
-            sys.stdout, rows, frequent_words=frequent_words, top_n=args.top_n
+            sys.stdout,
+            rows,
+            frequent_words=frequent_words,
+            rare_words=rare_words,
+            top_n=args.top_n,
         )
     else:
         with open(args.output, "w", encoding="utf-8") as fout:
             write_error_stats(
-                fout, rows, frequent_words=frequent_words, top_n=args.top_n
+                fout,
+                rows,
+                frequent_words=frequent_words,
+                rare_words=rare_words,
+                top_n=args.top_n,
             )
     return 0
 

@@ -31,3 +31,24 @@ def test_rare_word_substitutions_are_omitted_without_frequency_list():
     )
 
     assert "RARE WORD SUBSTITUTIONS" not in out.getvalue()
+
+
+def test_rare_word_substitutions_use_explicit_rare_word_list():
+    out = StringIO()
+    write_error_stats(
+        out,
+        [
+            ("utt1", ["common", "rare", "rare"], ["wrong", "wrong", "wrong"]),
+            ("utt2", ["other"], ["wrong"]),
+        ],
+        rare_words={"rare"},
+    )
+
+    report = out.getvalue()
+    assert "SRATE: 100.00 (4/4) 100.00 (2/2)" in report
+    assert "RARE WORD SUBSTITUTIONS: count ref -> hyp\n2   rare -> wrong" in report
+    rare_section = report.split("RARE WORD SUBSTITUTIONS:", 1)[1].split(
+        "DELETIONS:", 1
+    )[0]
+    assert "common -> wrong" not in rare_section
+    assert "other -> wrong" not in rare_section

@@ -61,6 +61,7 @@ def write_error_stats(
     f: TextIO,
     results: Iterable[Tuple[str, List[str], List[str]]],
     frequent_words: Optional[Set[str]] = None,
+    rare_words: Optional[Set[str]] = None,
     top_n: Optional[int] = None,
 ) -> float:
     """Write an icefall-style detailed error report to `f`.
@@ -68,6 +69,9 @@ def write_error_stats(
     `results` is an iterable of `(utt_id, ref_words, hyp_words)`. Returns
     the overall WER as a percentage rounded to 2 decimals (matches icefall).
     """
+    if frequent_words is not None and rare_words is not None:
+        raise ValueError("frequent_words and rare_words are mutually exclusive")
+
     results = list(results)
 
     subs: dict = defaultdict(int)
@@ -80,6 +84,14 @@ def write_error_stats(
 
     rare_ref_count = 0
     rare_sub_count = 0
+    report_rare_words = frequent_words is not None or rare_words is not None
+
+    def is_rare(word: str) -> bool:
+        if rare_words is not None:
+            return word in rare_words
+        if frequent_words is not None:
+            return word not in frequent_words
+        return False
 
     alis = []
     for utt_id, ref, hyp in results:
@@ -96,16 +108,16 @@ def write_error_stats(
                 subs[(ref_word, hyp_word)] += 1
                 words[ref_word][1] += 1
                 words[hyp_word][2] += 1
-                if frequent_words is not None and ref_word not in frequent_words:
+                if report_rare_words and is_rare(ref_word):
                     rare_subs[(ref_word, hyp_word)] += 1
                     rare_sub_count += 1
             else:
                 words[ref_word][0] += 1
                 num_corr += 1
             if (
-                frequent_words is not None
+                report_rare_words
                 and ref_word != ERR
-                and ref_word not in frequent_words
+                and is_rare(ref_word)
             ):
                 rare_ref_count += 1
 
@@ -127,7 +139,7 @@ def write_error_stats(
     cer = "%.2f" % (100.0 * char_errs / char_ref_len if char_ref_len else 0.0)
 
     rare_str = ""
-    if frequent_words is not None:
+    if report_rare_words:
         sub_rate = "%.2f" % (
             100.0 * sub_errs / ref_len if ref_len else 0.0
         )
@@ -144,7 +156,7 @@ def write_error_stats(
     for count, (r, h) in sorted(((v, k) for k, v in subs.items()), reverse=True):
         print(f"{count}   {r} -> {h}", file=f)
 
-    if frequent_words is not None:
+    if report_rare_words:
         print("", file=f)
         print("RARE WORD SUBSTITUTIONS: count ref -> hyp", file=f)
         for count, (r, h) in sorted(
