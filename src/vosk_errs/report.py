@@ -71,6 +71,7 @@ def write_error_stats(
     results = list(results)
 
     subs: dict = defaultdict(int)
+    rare_subs: dict = defaultdict(int)
     ins: dict = defaultdict(int)
     dels: dict = defaultdict(int)
     # corr, ref_sub, hyp_sub, ins, dels
@@ -96,6 +97,7 @@ def write_error_stats(
                 words[ref_word][1] += 1
                 words[hyp_word][2] += 1
                 if frequent_words is not None and ref_word not in frequent_words:
+                    rare_subs[(ref_word, hyp_word)] += 1
                     rare_sub_count += 1
             else:
                 words[ref_word][0] += 1
@@ -141,6 +143,14 @@ def write_error_stats(
     print("SUBSTITUTIONS: count ref -> hyp", file=f)
     for count, (r, h) in sorted(((v, k) for k, v in subs.items()), reverse=True):
         print(f"{count}   {r} -> {h}", file=f)
+
+    if frequent_words is not None:
+        print("", file=f)
+        print("RARE WORD SUBSTITUTIONS: count ref -> hyp", file=f)
+        for count, (r, h) in sorted(
+            ((v, k) for k, v in rare_subs.items()), reverse=True
+        ):
+            print(f"{count}   {r} -> {h}", file=f)
 
     print("", file=f)
     print("DELETIONS: count ref", file=f)
