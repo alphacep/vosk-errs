@@ -134,7 +134,7 @@ def write_error_stats(
         )
         rare_str = "SRATE: " + \
                    f"{sub_rate} ({sub_errs}/{ref_len}) " + \
-                   f"{rare_rate} ({rare_sub_count}/{rare_ref_count} at {top_n})"
+                   f"{rare_rate} ({rare_sub_count}/{rare_ref_count})"
     print(f"WER: {tot_err_rate}   CER: {cer}   I/D/S: {ins_errs}/{del_errs}/{sub_errs} ({num_corr}/{ref_len})   {rare_str}",
           file=f)
     print("", file=f)
