@@ -149,32 +149,36 @@ def write_error_stats(
         rare_str = "SRATE: " + \
                    f"{sub_rate} ({sub_errs}/{ref_len}) " + \
                    f"{rare_rate} ({rare_sub_count}/{rare_ref_count})"
-    print(f"WER: {tot_err_rate}   CER: {cer}   I/D/S: {ins_errs}/{del_errs}/{sub_errs} ({num_corr}/{ref_len})   {rare_str}",
-          file=f)
+    print(
+        f"WER: {tot_err_rate}   CER: {cer}   I/D/S: {ins_errs}/{del_errs}/{sub_errs} "
+        f"({num_corr}/{ref_len})   {rare_str}",
+        file=f,
+        flush=True,
+    )
     print("", file=f)
     print("SUBSTITUTIONS: count ref -> hyp", file=f)
     for count, (r, h) in sorted(((v, k) for k, v in subs.items()), reverse=True):
         print(f"{count}   {r} -> {h}", file=f)
+    print("", file=f, flush=True)
 
     if report_rare_words:
-        print("", file=f)
         print("RARE WORD SUBSTITUTIONS: count ref -> hyp", file=f)
         for count, (r, h) in sorted(
             ((v, k) for k, v in rare_subs.items()), reverse=True
         ):
             print(f"{count}   {r} -> {h}", file=f)
+        print("", file=f, flush=True)
 
-    print("", file=f)
     print("DELETIONS: count ref", file=f)
     for count, r in sorted(((v, k) for k, v in dels.items()), reverse=True):
         print(f"{count}   {r}", file=f)
+    print("", file=f, flush=True)
 
-    print("", file=f)
     print("INSERTIONS: count hyp", file=f)
     for count, h in sorted(((v, k) for k, v in ins.items()), reverse=True):
         print(f"{count}   {h}", file=f)
+    print("", file=f, flush=True)
 
-    print("", file=f)
     print("PER-UTT DETAILS: corr or (ref->hyp)  ", file=f)
     for utt_id, ali in alis:
         merged = _combine_successive_errors(ali)
@@ -182,19 +186,25 @@ def write_error_stats(
             r if r == h else f"({r}->{h})" for r, h in merged
         )
         print(f"{utt_id}:\t{rendered}", file=f)
+    print("", file=f, flush=True)
 
-    print("", file=f)
+    word_items = sorted(
+        ((sum(v[1:]), k, v) for k, v in words.items()), reverse=True
+    )
     print(
         "PER-WORD STATS: word  corr tot_errs count_in_ref count_in_hyp",
         file=f,
+        flush=not word_items,
     )
-    for _, word, counts in sorted(
-        ((sum(v[1:]), k, v) for k, v in words.items()), reverse=True
-    ):
+    for i, (_, word, counts) in enumerate(word_items):
         corr, ref_sub, hyp_sub, ins_c, dels_c = counts
         word_tot_errs = ref_sub + hyp_sub + ins_c + dels_c
         ref_count = corr + ref_sub + dels_c
         hyp_count = corr + hyp_sub + ins_c
-        print(f"{word}   {corr} {word_tot_errs} {ref_count} {hyp_count}", file=f)
+        print(
+            f"{word}   {corr} {word_tot_errs} {ref_count} {hyp_count}",
+            file=f,
+            flush=i == len(word_items) - 1,
+        )
 
     return float(tot_err_rate)

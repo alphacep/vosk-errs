@@ -6,6 +6,13 @@ from .io import pair, read_frequent_words, read_transcripts, read_word_list
 from .report import write_error_stats
 
 
+def _exit_on_broken_pipe(exc: BrokenPipeError) -> None:
+    """Exit cleanly when a pipe consumer closes early (e.g. `| head`)."""
+    # Prevent "Exception ignored" during interpreter shutdown.
+    sys.stdout = None
+    raise SystemExit(exc.errno)
+
+
 def main(argv=None) -> int:
     p = argparse.ArgumentParser(
         prog="vosk-errs",
@@ -87,13 +94,16 @@ def main(argv=None) -> int:
         rare_words = read_word_list(args.rare_list, lowercase=args.ignore_case)
 
     if args.output is None:
-        write_error_stats(
-            sys.stdout,
-            rows,
-            frequent_words=frequent_words,
-            rare_words=rare_words,
-            top_n=args.top_n,
-        )
+        try:
+            write_error_stats(
+                sys.stdout,
+                rows,
+                frequent_words=frequent_words,
+                rare_words=rare_words,
+                top_n=args.top_n,
+            )
+        except BrokenPipeError as exc:
+            _exit_on_broken_pipe(exc)
     else:
         with open(args.output, "w", encoding="utf-8") as fout:
             write_error_stats(
